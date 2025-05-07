@@ -1,3 +1,4 @@
+"use client";
 import {
   createContext,
   useContext,
@@ -25,27 +26,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const firebaseUser = await authService.getCurrentUser();
-        if (firebaseUser) {
-          setUser({
-            id: firebaseUser.uid,
-            email: firebaseUser.email || "",
-            displayName: firebaseUser.displayName || firebaseUser.email || "",
-            photoURL: firebaseUser.photoURL || undefined,
-          });
-        } else {
-          setUser(null);
-        }
-      } catch (error) {
-        console.error("Error fetching user:", error);
-      } finally {
-        setLoading(false);
+    const unsubscribe = authService.onAuthChange((firebaseUser) => {
+      if (firebaseUser) {
+        setUser({
+          id: firebaseUser.uid,
+          email: firebaseUser.email || "",
+          displayName: firebaseUser.displayName || "",
+          photoURL: firebaseUser.photoURL || undefined,
+        });
+      } else {
+        setUser(null);
       }
-    };
+      setLoading(false);
+    });
 
-    fetchUser();
+    return () => unsubscribe();
   }, []);
 
   return (

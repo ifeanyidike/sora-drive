@@ -1,108 +1,82 @@
-import { rootStore } from "@/store/rootStore";
-import { Folder as FolderType } from "@/types";
-import { Button, Card, Dropdown, message, Modal } from "antd";
-import { Edit, Folder, MoreVertical, Trash2 } from "lucide-react";
-import { observer } from "mobx-react-lite";
+import React from "react";
+import { Star } from "lucide-react";
+import { App } from "antd";
 import Link from "next/link";
-import React, { useState } from "react";
+import { Folder } from "@/types";
+import { observer } from "mobx-react-lite";
+import { rootStore } from "@/store/rootStore";
+import ContextMenu from "../layout/ContextMenu";
 
-type Props = {
-  folder: FolderType;
-};
-const FolderCard = ({ folder }: Props) => {
+interface Props {
+  folder: Folder;
+  isSelected: boolean;
+  onSelect: (id: string) => void;
+}
+
+const FolderCardGrid: React.FC<Props> = ({ folder, isSelected, onSelect }) => {
   const { folderStore } = rootStore;
-  const [renameModal, toggleRenameModal] = useState(false);
-  const [newName, setNewName] = useState(folder.name);
+  const { message } = App.useApp();
 
-  const handleRename = async () => {
+  const handleStar = async () => {
     try {
-      await folderStore.renameFolder(folder.id, newName);
-      message.success("Folder renamed successfully");
-      toggleRenameModal(false);
+      await folderStore.toggleStar(folder.id);
+      message.success(
+        folder.starred ? "Removed from starred" : "Added to starred"
+      );
     } catch (error) {
-      message.error("Failed to rename folder");
-      console.error("Failed to rename folder", error);
+      message.error("Failed to update star status");
+      console.error("Failed to update star status", error);
     }
   };
-
-  const handleDelete = async () => {
-    try {
-      await folderStore.deleteFolder(folder.id);
-      message.success("Folder deleted successfully");
-    } catch (error) {
-      message.error("Failed to delete folder");
-      console.error("Failed to delete folder", error);
-    }
-  };
-
-  const handleMove = async () => {
-    try {
-      await folderStore.moveFolder(folder.id, folder.parentId);
-      message.success("Folder moved successfully");
-    } catch (error) {
-      message.error("Failed to move folder");
-      console.error("Failed to move folder", error);
-    }
-  };
-
-  const menu = [
-    {
-      key: "1",
-      label: "Rename",
-      icon: <Edit size={16} />,
-      onClick: () => toggleRenameModal(true),
-    },
-    {
-      key: "3",
-      label: "Delete",
-      icon: <Trash2 size={16} />,
-      onClick: handleDelete,
-    },
-  ];
 
   return (
     <>
-      <Card
-        hoverable
-        className="w-full"
-        actions={[
-          <Dropdown menu={{ items: menu }} trigger={["click"]} key="more">
-            <MoreVertical size={16} className="cursor-pointer" />
-          </Dropdown>,
-        ]}
+      <div
+        className={`flex items-center p-2 ${
+          isSelected ? "bg-blue-100" : "bg-gray-200/80 hover:bg-gray-300"
+        } cursor-pointer rounded-xl transition-colors`}
       >
-        <Link
-          href={`/dashboard/${folder.id}`}
-          className="flex flex-col items-center"
-        >
-          <div className="flex justify-center mb-2">
-            <Folder size={48} className="text-yellow-500" />
+        <div className="flex items-center flex-grow">
+          <div className="mr-3">
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="#5f6368"
+              className="flex-shrink-0"
+            >
+              <path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z" />
+            </svg>
           </div>
-          <div className="text-center truncate w-full">{folder.name}</div>
-        </Link>
-      </Card>
-      <Modal
-        title="Rename Folder"
-        open={renameModal}
-        onCancel={() => toggleRenameModal(false)}
-        footer={[
-          <Button key="cancel" onClick={() => toggleRenameModal(false)}>
-            Cancel
-          </Button>,
-          <Button key="submit" type="primary" onClick={handleRename}>
-            Rename
-          </Button>,
-        ]}
-      >
-        <input
-          type="text"
-          value={newName}
-          onChange={(e) => setNewName(e.target.value)}
-          className="w-full p-2 border rounded"
-        />
-      </Modal>
+          <Link
+            href={`/dashboard/folders/${folder.id}`}
+            className="flex-grow truncate text-sm !text-[#202124]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {folder.name}
+          </Link>
+        </div>
+
+        <div className="flex items-center">
+          {folder.starred && (
+            <button
+              className="p-2 rounded-full hover:bg-[#f1f3f4]"
+              onClick={handleStar}
+            >
+              <Star size={16} className="text-[#fbbc04]" fill="#fbbc04" />
+            </button>
+          )}
+
+          <ContextMenu
+            item={folder}
+            type="folder"
+            onSelect={onSelect}
+            className="p-2 rounded-full hover:bg-[#f1f3f4]"
+          />
+        </div>
+      </div>
     </>
   );
 };
 
-export default observer(FolderCard);
+export default observer(FolderCardGrid);

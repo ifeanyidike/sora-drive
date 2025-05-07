@@ -5,25 +5,34 @@ export type User = {
   photoURL?: string;
 };
 
-export type File = {
+export interface File {
   id: string;
   name: string;
   type: string;
   size: number;
   url: string;
-  folderId: string | null;
-  userId: string;
-  createdAt: Date;
-  updatedAt: Date;
-};
+  folder_id: string | null;
+  user_id: string;
+  created_at: Date;
+  updated_at: Date;
+  starred?: boolean;
+  trashed?: boolean;
+}
 
-export type Folder = {
+export interface Folder {
   id: string;
   name: string;
-  parentId: string | null;
-  userId: string;
-  createdAt: Date;
-  updatedAt: Date;
-};
+  parent_id: string | null;
+  user_id: string;
+  created_at: Date;
+  updated_at: Date;
+  starred?: boolean;
+  trashed?: boolean;
+}
 
 export type ViewMode = "grid" | "list";
+
+export type RejectedFile = {
+  name: string;
+  reason: string;
+};

@@ -1,20 +1,50 @@
 import { type File } from "@/types";
-import { Spin } from "antd";
 import { FileIcon, FileText } from "lucide-react";
 import { observer } from "mobx-react-lite";
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Document, Page, pdfjs } from "react-pdf";
+import * as docx from "docx-preview";
 
 type Props = {
   file: File;
+  documentHeight?: string;
+  width?: string;
+  minimal?: boolean;
 };
 
-pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
-
-const FilePreview = ({ file }: Props) => {
+pdfjs.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
+const FilePreview = ({
+  file,
+  documentHeight = "h-[80vh]",
+  width = "w-full",
+  minimal = false,
+}: Props) => {
   const [numPages, setNumPages] = useState<number | null>(null);
   const [pageNumber, setPageNumber] = useState(1);
   const [loading, setLoading] = useState(true);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const loadWordDocument = async () => {
+      if (
+        file.type ===
+          "application/vnd.openxmlformats-officedocument.wordprocessingml.document" &&
+        containerRef.current
+      ) {
+        try {
+          const response = await fetch(file.url);
+          const arrayBuffer = await response.arrayBuffer();
+          await docx.renderAsync(arrayBuffer, containerRef.current);
+          setLoading(false);
+        } catch (error) {
+          console.error("Error loading Word document:", error);
+          setLoading(false);
+        }
+      }
+    };
+
+    loadWordDocument();
+  }, [file.url, file.type]);
 
   const onDocumentLoadSuccess = ({ numPages }: { numPages: number }) => {
     setNumPages(numPages);
@@ -35,17 +65,33 @@ const FilePreview = ({ file }: Props) => {
       );
     }
 
+    if (
+      file.type ===
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    ) {
+      return (
+        <div
+          ref={containerRef}
+          className="bg-white p-8 max-w-4xl mx-auto shadow-lg rounded-lg"
+        />
+      );
+    }
+
     if (file.type.includes("pdf")) {
       return (
-        <div className="flex flex-col items-center">
-          <Document
-            file={file.url}
-            onLoadSuccess={onDocumentLoadSuccess}
-            onLoadError={() => setLoading(false)}
+        <div className="flex flex-col items-center ">
+          <div
+            className={`${width} ${documentHeight} overflow-auto bg-white shadow rounded`}
           >
-            <Page pageNumber={pageNumber} />
-          </Document>
-          {numPages && (
+            <Document
+              file={file.url}
+              onLoadSuccess={onDocumentLoadSuccess}
+              onLoadError={() => setLoading(false)}
+            >
+              <Page pageNumber={pageNumber} />
+            </Document>
+          </div>
+          {numPages && !minimal && (
             <div className="mt-4">
               <p>
                 Page {pageNumber} of {numPages}
@@ -86,7 +132,7 @@ const FilePreview = ({ file }: Props) => {
           Size: {(file.size / 1024).toFixed(2)} KB
         </p>
         <p className="text-gray-500">
-          Created: {new Date(file.createdAt).toLocaleDateString()}
+          Created: {new Date(file.created_at).toLocaleDateString()}
         </p>
         <a
           href={file.url}
@@ -100,15 +146,10 @@ const FilePreview = ({ file }: Props) => {
   };
 
   return (
-    <div className="w-full min-h-screen flex justify-center items-center bg-gray-100 p-4">
-      {loading ? (
-        <div className="flex flex-col items-center">
-          <Spin size="large" />
-          <p className="mt-4">Loading preview...</p>
-        </div>
-      ) : (
-        renderPreview()
-      )}
+    <div
+      className={`${width} flex justify-center items-center bg-gray-100 p-4`}
+    >
+      {renderPreview()}
     </div>
   );
 };

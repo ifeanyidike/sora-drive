@@ -1,84 +1,118 @@
-import { rootStore } from "@/store/rootStore";
-import { File } from "@/types";
-import { Dropdown, Table } from "antd";
-import { MoreVertical } from "lucide-react";
-import { observer } from "mobx-react-lite";
-import Link from "next/link";
 import React from "react";
+import { observer } from "mobx-react-lite";
+import { Star } from "lucide-react";
+import Link from "next/link";
+import { File, Folder } from "@/types";
+import { App } from "antd";
+import { rootStore } from "@/store/rootStore";
+import { formatDate, formatSize, getThumbnailIcon } from "@/lib/utils";
+import ContextMenu from "../layout/ContextMenu";
 
-type Props = {
-  files: File[];
-};
-const FileList = ({ files }: Props) => {
-  const fileStore = rootStore.fileStore;
+interface FileListProps {
+  items: (File | (Folder & { type: "file" | "folder" }))[];
+}
 
-  const handleRename = (file: File) => {};
+const FileListView: React.FC<FileListProps> = ({ items }) => {
+  const { fileStore, folderStore } = rootStore;
+  const { message } = App.useApp();
 
-  const handleMove = (file: File) => {};
+  const handleStar = async (
+    e: React.MouseEvent,
+    item: File | (Folder & { type: "file" | "folder" })
+  ) => {
+    e.preventDefault();
+    e.stopPropagation();
+    try {
+      if (item.type === "file") {
+        await fileStore.toggleStar(item.id);
+      } else {
+        await folderStore.toggleStar(item.id);
+      }
+      message.success(
+        item.starred ? "Removed from starred" : "Added to starred"
+      );
+    } catch (error) {
+      message.error("Failed to update star status");
+    }
+  };
+  return (
+    <div className="rounded-lg border border-[#dadce0] overflow-hidden bg-white">
+      <div className="flex items-center py-2 px-4 bg-[#f8f9fa] border-b border-[#dadce0]">
+        <div className="w-10"></div>
+        <div className="flex-grow text-sm font-medium text-[#5f6368]">Name</div>
+        <div className="flex items-center">
+          <div className="text-sm font-medium text-[#5f6368] w-32 text-right mr-4 hidden md:block">
+            Last modified
+          </div>
+          <div className="text-sm font-medium text-[#5f6368] w-24 text-right mr-4 hidden md:block">
+            File size
+          </div>
+          <div className="w-10"></div>
+        </div>
+      </div>
 
-  const handleDelete = async (fileId: string) => {};
-
-  const columns = [
-    {
-      title: "Name",
-      dataIndex: "name",
-      key: "name",
-      render: (text: string, record: File) => (
-        <Link href={`/files/${record.id}`} className="flex items-center">
-          {text}
-        </Link>
-      ),
-    },
-    {
-      title: "Size",
-      dataIndex: "size",
-      key: "size",
-      render: (size: number) => `${(size / 1024).toFixed(2)} KB`,
-    },
-    {
-      title: "Type",
-      dataIndex: "type",
-      key: "type",
-    },
-    {
-      title: "Last Modified",
-      dataIndex: "updatedAt",
-      key: "updatedAt",
-      render: (date: string) => new Date(date).toLocaleDateString(),
-    },
-    {
-      title: "Actions",
-      key: "actions",
-      render: (record: File) => (
-        <Dropdown
-          menu={{
-            items: [
-              {
-                key: "1",
-                label: "Rename",
-                onClick: () => handleRename(record),
-              },
-              {
-                key: "2",
-                label: "Move",
-                onClick: () => handleMove(record),
-              },
-              {
-                key: "3",
-                label: "Delete",
-                onClick: () => handleDelete(record.id),
-                danger: true,
-              },
-            ],
-          }}
-          trigger={["click"]}
+      {items.map((item) => (
+        <div
+          key={item.id}
+          className="group flex items-center min-w-0 border-b last:border-b-0 border-[#dadce0] hover:bg-[#f8f9fa] transition-colors"
         >
-          <MoreVertical size={16} className="cursor-pointer" />
-        </Dropdown>
-      ),
-    },
-  ];
-  return <Table dataSource={files} columns={columns} rowKey="id" />;
+          <div className="flex items-center py-2 px-4 w-full">
+            <div className="mr-3 flex-shrink-0">
+              {getThumbnailIcon(item.type as any, "18", (item as File).type)}
+            </div>
+
+            <Link
+              href={
+                item.type === "folder"
+                  ? `/dashboard/folders/${item.id}`
+                  : `/files/${item.id}`
+              }
+              className="max-w-[180px] sm:max-w-[220px] md:max-w-full flex-grow min-w-0 overflow-hidden whitespace-nowrap text-ellipsis truncate md:whitespace-normal md:overflow-visible md:text-clip text-sm text-[#202124] hover:text-[#1a73e8]"
+              title={item.name}
+            >
+              {item.name}
+            </Link>
+
+            <div className="flex items-center ml-auto">
+              {item.starred && (
+                <button
+                  className="p-2 rounded-full hover:bg-[#f1f3f4]"
+                  onClick={(e) => handleStar(e, item)}
+                >
+                  <Star size={16} className="text-[#fbbc04]" fill="#fbbc04" />
+                </button>
+              )}
+
+              <div className="text-sm text-[#5f6368] w-32 text-right mr-4 hidden md:block">
+                {formatDate(item.updated_at || item.created_at)}
+              </div>
+
+              {item.type === "file" && (
+                <div className="text-sm text-[#5f6368] w-24 text-right mr-4 hidden md:block">
+                  {formatSize((item as File).size || 0)}
+                </div>
+              )}
+              {item.type !== "file" && (
+                <div className="text-sm text-[#5f6368] w-24 text-right mr-4">
+                  -
+                </div>
+              )}
+
+              <div className="relative">
+                <ContextMenu
+                  item={item}
+                  onSelect={() => {}}
+                  type={item.type as any}
+                  left="left-28"
+                  className="p-2 rounded-full hover:bg-[#f1f3f4]"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
 };
 
-export default observer(FileList);
+export default observer(FileListView);
