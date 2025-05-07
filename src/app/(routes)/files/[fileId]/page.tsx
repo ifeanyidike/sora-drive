@@ -150,7 +150,7 @@ const FilePage = () => {
                 File not found
               </h2>
               <p className="text-[#5f6368] mb-6">
-                The file you're looking for may have been deleted or moved.
+                The file you&apos;re looking for may have been deleted or moved.
               </p>
               <Button
                 type="primary"

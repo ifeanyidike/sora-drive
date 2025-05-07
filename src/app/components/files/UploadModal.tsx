@@ -428,7 +428,8 @@ const UploadModal: React.FC<Props> = ({
                   <Info size={16} className="mr-2 text-[#ea4335]" />
                   <span className="text-sm text-[#3c4043] flex-1">
                     {rejectedFiles.length} file
-                    {rejectedFiles.length !== 1 ? "s" : ""} couldn't be uploaded
+                    {rejectedFiles.length !== 1 ? "s" : ""} couldn&apos;t be
+                    uploaded
                   </span>
                   <Button
                     type="text"
