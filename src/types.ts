@@ -5,7 +5,7 @@ export type User = {
   photoURL?: string;
 };
 
-export interface File {
+export type File = {
   id: string;
   name: string;
   type: string;
@@ -17,9 +17,9 @@ export interface File {
   updated_at: Date;
   starred?: boolean;
   trashed?: boolean;
-}
+};
 
-export interface Folder {
+export type Folder = {
   id: string;
   name: string;
   parent_id: string | null;
@@ -28,7 +28,7 @@ export interface Folder {
   updated_at: Date;
   starred?: boolean;
   trashed?: boolean;
-}
+};
 
 export type ViewMode = "grid" | "list";
 

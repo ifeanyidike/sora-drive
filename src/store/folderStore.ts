@@ -135,7 +135,7 @@ export class FolderStore {
     }
   }
 
-  async moveToTrash(folder_id: string) {
+  async moveOrRestoreTrash(folder_id: string) {
     this.setLoading(true);
     this.setError(null);
 
@@ -154,39 +154,9 @@ export class FolderStore {
         if (index !== -1) {
           this.folders[index] = {
             ...this.folders[index],
-            trashed: true,
+            trashed: !item.trashed,
             updated_at: new Date(),
           };
-          this.folders = this.folders.filter((f) => f.id !== folder_id);
-        }
-      });
-    } catch (error: any) {
-      runInAction(() => this.setError(error.message));
-    } finally {
-      runInAction(() => this.setLoading(false));
-    }
-  }
-
-  async restoreFromTrash(folder_id: string) {
-    this.setLoading(true);
-    this.setError(null);
-    try {
-      const { error } = await supabase
-        .from("folders")
-        .update({ trashed: false, updated_at: new Date() })
-        .eq("id", folder_id);
-
-      if (error) throw error;
-
-      runInAction(() => {
-        const index = this.folders.findIndex((f) => f.id === folder_id);
-        if (index !== -1) {
-          this.folders[index] = {
-            ...this.folders[index],
-            trashed: false,
-            updated_at: new Date(),
-          };
-          // Remove from trash view
           this.folders = this.folders.filter((f) => f.id !== folder_id);
         }
       });
@@ -227,27 +197,6 @@ export class FolderStore {
     }
   }
 
-  async deleteFolder(folder_id: string) {
-    this.setLoading(true);
-    this.setError(null);
-    try {
-      const { error } = await supabase
-        .from("folders")
-        .delete()
-        .eq("id", folder_id);
-
-      if (error) throw error;
-
-      runInAction(() => {
-        this.folders = this.folders.filter((folder) => folder.id !== folder_id);
-      });
-    } catch (error: any) {
-      runInAction(() => this.setError(error.message));
-    } finally {
-      runInAction(() => this.setLoading(false));
-    }
-  }
-
   async renameFolder(folder_id: string, newName: string) {
     this.setLoading(true);
     this.setError(null);
@@ -269,64 +218,6 @@ export class FolderStore {
           this.folders[index] = {
             ...this.folders[index],
             name: newName,
-            updated_at: new Date(),
-          };
-        }
-      });
-    } catch (error: any) {
-      runInAction(() => this.setError(error.message));
-    } finally {
-      runInAction(() => this.setLoading(false));
-    }
-  }
-
-  async updateFolder(folder_id: string, updatedFolder: Partial<Folder>) {
-    this.setLoading(true);
-    this.setError(null);
-    try {
-      const { data, error } = await supabase
-        .from("folders")
-        .update({ ...updatedFolder, updated_at: new Date() })
-        .eq("id", folder_id)
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      runInAction(() => {
-        const index = this.folders.findIndex(
-          (folder) => folder.id === folder_id
-        );
-        if (index !== -1) {
-          this.folders[index] = { ...this.folders[index], ...data };
-        }
-      });
-    } catch (error: any) {
-      runInAction(() => this.setError(error.message));
-    } finally {
-      runInAction(() => this.setLoading(false));
-    }
-  }
-
-  async moveFolder(folder_id: string, newParentId: string | null) {
-    this.setLoading(true);
-    this.setError(null);
-    try {
-      const { error } = await supabase
-        .from("folders")
-        .update({ parent_id: newParentId, updated_at: new Date() })
-        .eq("id", folder_id);
-
-      if (error) throw error;
-
-      runInAction(() => {
-        const index = this.folders.findIndex(
-          (folder) => folder.id === folder_id
-        );
-        if (index !== -1) {
-          this.folders[index] = {
-            ...this.folders[index],
-            parent_id: newParentId,
             updated_at: new Date(),
           };
         }

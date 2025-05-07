@@ -29,9 +29,9 @@ const SelectionManager: React.FC<SelectionManagerProps> = ({
   const handleTrash = async () => {
     try {
       if (selectedItem.type === "file") {
-        await fileStore.moveToTrash(selectedItem.id);
+        await fileStore.moveOrRestoreTrash(selectedItem.id);
       } else {
-        await folderStore.moveToTrash(selectedItem.id);
+        await folderStore.moveOrRestoreTrash(selectedItem.id);
       }
       rootStore.clearSelection();
       message.success(`${selectedItem.type}  moved to trash`);

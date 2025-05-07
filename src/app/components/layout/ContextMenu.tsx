@@ -59,9 +59,9 @@ const ContextMenu: FC<Props> = ({
   const handleTrash = async () => {
     try {
       if (type === "file") {
-        await fileStore.moveToTrash(item.id);
+        await fileStore.moveOrRestoreTrash(item.id);
       } else {
-        await folderStore.moveToTrash(item.id);
+        await folderStore.moveOrRestoreTrash(item.id);
       }
       message.success("Moved to trash");
     } catch (error) {

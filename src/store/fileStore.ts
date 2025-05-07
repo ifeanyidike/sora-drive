@@ -172,7 +172,7 @@ export class FileStore {
     }
   }
 
-  async moveToTrash(fileId: string) {
+  async moveOrRestoreTrash(fileId: string) {
     this.setLoading(true);
     this.setError(null);
 
@@ -193,7 +193,7 @@ export class FileStore {
         if (index !== -1) {
           this.files[index] = {
             ...this.files[index],
-            trashed: true,
+            trashed: !item.trashed,
             updated_at: new Date(),
           };
           this.files = this.files.filter((f) => f.id !== fileId);
@@ -201,39 +201,6 @@ export class FileStore {
       });
     } catch (error: any) {
       console.log("error", error);
-      runInAction(() => {
-        this.setError(error.message);
-      });
-    } finally {
-      runInAction(() => {
-        this.setLoading(false);
-      });
-    }
-  }
-
-  async restoreFromTrash(fileId: string) {
-    this.setLoading(true);
-    this.setError(null);
-    try {
-      const { error } = await supabase
-        .from("files")
-        .update({ trashed: false, updated_at: new Date() })
-        .eq("id", fileId);
-
-      if (error) throw error;
-
-      runInAction(() => {
-        const index = this.files.findIndex((f) => f.id === fileId);
-        if (index !== -1) {
-          this.files[index] = {
-            ...this.files[index],
-            trashed: false,
-            updated_at: new Date(),
-          };
-          this.files = this.files.filter((f) => f.id !== fileId);
-        }
-      });
-    } catch (error: any) {
       runInAction(() => {
         this.setError(error.message);
       });
@@ -388,35 +355,6 @@ export class FileStore {
     }
   }
 
-  async deleteFile(fileUrl: string, fileId: string) {
-    this.setLoading(true);
-    this.setError(null);
-    try {
-      // First remove from storage
-      const result = await removeFromObjectStorage(fileUrl, fileId);
-
-      if (result.status !== "success") {
-        throw new Error("An error occurred when deleting files");
-      }
-
-      // Then remove from database
-      const { error } = await supabase.from("files").delete().eq("id", fileId);
-      if (error) throw error;
-
-      runInAction(() => {
-        this.files = this.files.filter((file) => file.id !== fileId);
-      });
-    } catch (error: any) {
-      runInAction(() => {
-        this.setError(error.message);
-      });
-    } finally {
-      runInAction(() => {
-        this.setLoading(false);
-      });
-    }
-  }
-
   async renameFile(fileId: string, newName: string) {
     this.setLoading(true);
     this.setError(null);
@@ -436,39 +374,6 @@ export class FileStore {
             name: newName,
             updated_at: new Date(),
           };
-        }
-      });
-    } catch (error: any) {
-      runInAction(() => {
-        this.setError(error.message);
-      });
-    } finally {
-      runInAction(() => {
-        this.setLoading(false);
-      });
-    }
-  }
-
-  async moveFile(fileId: string, newFolderId: string | null) {
-    this.setLoading(true);
-    this.setError(null);
-    try {
-      const { error } = await supabase
-        .from("files")
-        .update({ folder_id: newFolderId, updated_at: new Date() })
-        .eq("id", fileId);
-
-      if (error) throw error;
-
-      runInAction(() => {
-        const fileIndex = this.files.findIndex((file) => file.id === fileId);
-        if (fileIndex !== -1) {
-          this.files[fileIndex] = {
-            ...this.files[fileIndex],
-            folder_id: newFolderId,
-            updated_at: new Date(),
-          };
-          this.files = this.files.filter((file) => file.id !== fileId);
         }
       });
     } catch (error: any) {

@@ -422,7 +422,7 @@ const FolderPage = () => {
               {isDragActive ? "Drop files here" : "Folder is empty"}
             </p>
             <p className="text-[#5f6368] mb-4 text-center">
-              Drop files here or use the "New" button
+              Drop files here or use the New button
             </p>
             <p className="text-xs text-[#5f6368] mb-2">
               Maximum file size: {formatSize(MAX_FILE_SIZE)}

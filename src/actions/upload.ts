@@ -1,5 +1,4 @@
 "use server";
-import { revalidatePath } from "next/cache";
 import { v2 as cloudinary, UploadApiOptions } from "cloudinary";
 
 cloudinary.config({

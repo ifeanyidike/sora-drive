@@ -80,7 +80,7 @@ const FilePage = () => {
 
   const handleTrash = async () => {
     if (file) {
-      await fileStore.moveToTrash(file.id);
+      await fileStore.moveOrRestoreTrash(file.id);
       message.success("Moved to trash");
       router.push(file.folder_id ? `/${file.folder_id}` : "/");
     }
